@@ -33,12 +33,211 @@ install.packages("broom", repos = "https://cran.rstudio.com/")
 library(broom)
 library(arm)
 library(readr)
+library(readxl)
+library(tidyverse)
+library(tidyr) 
+library(stringr)
+library(httr) 
+install.packages("twitteR", repos = "https://cran.rstudio.com/")
+library(twitteR)
+library(rvest) 
+install.packages("streamR", repos = "https://cran.rstudio.com/")
+library(streamR)
+install.packages("RCurl", repos = "https://cran.rstudio.com/")
+library(RCurl)
+install.packages("ROAuth", repos = "https://cran.rstudio.com/")
+library(ROAuth)
+install.packages("stringi", repos = "https://cran.rstudio.com/")
+library(stringi)
 ```
 
 ```{r data, include=FALSE, echo=FALSE}
 ACLED <- read_csv("~/Armed-Conflict-Location-Event-Data/ACLED-Version-7-All-Africa-1997-2016_csv_dyadic-file.csv")
-View(ACLED)
+ACLED <- subset(ACLED, select = c("YEAR","EVENT_TYPE", "COUNTRY"))
+names(ACLED)[names(ACLED) == 'COUNTRY'] <- 'Country'
+names(ACLED)[names(ACLED) == 'YEAR'] <- 'year'
+ACLED <- ACLED %>% dplyr::group_by(year, Country, EVENT_TYPE) %>% dplyr::summarize(count = n())
+HDI <- read_excel("~/Armed-Conflict-Location-Event-Data/Statistical model/Human development index/HDIversion2.xlsx")
+HDI <- HDI[, -1]
+HDI <- HDI %>% gather(key = year, value = score, -Country)
+democracy <- read_excel("~/Armed-Conflict-Location-Event-Data/Statistical model/Polity IV/p4v2016.xls")
+democracy <- democracy[, -c(1:2)]
+DATA <- merge(ACLED, HDI, by=c("year","Country"))
+names(DATA)[names(DATA) == 'Country'] <- 'country'
+DATA <- merge(DATA, democracy, by=c("year","country"))
+DATA <- subset(DATA, year >= 2010)
+DATA <- apply(DATA,2,toupper)
 ```
+
+```{r facebook data, include=FALSE, echo=FALSE}
+#2010Country names
+url <- "https://web.archive.org/web/20101008034936/http://internetworldstats.com/africa.htm"
+css <- "img+ font b"
+url_parsed <- read_html(url)
+country_name_2010 <- html_nodes(url_parsed, css = css) %>% html_text
+
+#2010info
+url <- "https://web.archive.org/web/20101008034936/http://internetworldstats.com/africa.htm"
+css <- "tr:nth-child(9) font"
+url_parsed <- read_html(url)
+country_info_2010 <- html_nodes(url_parsed, css = css) %>% html_text
+
+#2011Country names
+url <- "https://web.archive.org/web/20111002190951/http://www.internetworldstats.com:80/africa.htm"
+css <- "img+ font b"
+url_parsed <- read_html(url)
+country_name_2011 <- html_nodes(url_parsed, css = css) %>% html_text
+
+#2011info
+url <- "https://web.archive.org/web/20111002190951/http://www.internetworldstats.com:80/africa.htm"
+css <- "tr:nth-child(9) font"
+url_parsed <- read_html(url)
+country_info_2011 <- html_nodes(url_parsed, css = css) %>% html_text
+
+#2012Country names
+url <- "https://web.archive.org/web/20121014111737/http://www.internetworldstats.com:80/africa.htm"
+css <- "img+ font b"
+url_parsed <- read_html(url)
+country_name_2012 <- html_nodes(url_parsed, css = css) %>% html_text
+
+#2012info
+url <- "https://web.archive.org/web/20121014111737/http://www.internetworldstats.com:80/africa.htm"
+css <- "tr:nth-child(9) font" 
+url_parsed <- read_html(url)
+country_info_2012 <- html_nodes(url_parsed, css = css) %>% html_text
+
+#2013Country names
+url <- "https://web.archive.org/web/20131015014009/http://www.internetworldstats.com/africa.htm"
+css <- "font~ img+ font b"
+url_parsed <- read_html(url)
+country_name_2013 <- html_nodes(url_parsed, css = css) %>% html_text
+
+#2013info
+url <- "https://web.archive.org/web/20131015014009/http://www.internetworldstats.com/africa.htm"
+css <- "tr:nth-child(9) font" 
+url_parsed <- read_html(url)
+country_info_2013 <- html_nodes(url_parsed, css = css) %>% html_text
+
+#2014Country names
+url <- "https://web.archive.org/web/20141013134528/http://www.internetworldstats.com/africa.htm"
+css <- "font~ img+ font b"
+url_parsed <- read_html(url)
+country_name_2014 <- html_nodes(url_parsed, css = css) %>% html_text
+
+#2014info
+url <- "https://web.archive.org/web/20141013134528/http://www.internetworldstats.com/africa.htm"
+css <- "tr:nth-child(9) font" 
+url_parsed <- read_html(url)
+country_info_2014 <- html_nodes(url_parsed, css = css) %>% html_text
+
+#2015Country names
+url <- "https://web.archive.org/web/20151020040350/http://www.internetworldstats.com:80/africa.htm"
+css <- "font~ img+ font b"
+url_parsed <- read_html(url)
+country_name_2015 <- html_nodes(url_parsed, css = css) %>% html_text
+
+#2015info
+url <- "https://web.archive.org/web/20151020040350/http://www.internetworldstats.com:80/africa.htm"
+css <- "tr:nth-child(9) font" 
+url_parsed <- read_html(url)
+country_info_2015 <- html_nodes(url_parsed, css = css) %>% html_text
+
+#2016Country names
+url <- "https://web.archive.org/web/20161001223626/http://www.internetworldstats.com/africa.htm"
+css <- "font~ img+ font b"
+url_parsed <- read_html(url)
+country_name_2016 <- html_nodes(url_parsed, css = css) %>% html_text
+
+#2016info
+url <- "https://web.archive.org/web/20161001223626/http://www.internetworldstats.com/africa.htm"
+css <- "tr:nth-child(9) font" 
+url_parsed <- read_html(url)
+country_info_2016 <- html_nodes(url_parsed, css = css) %>% html_text
+
+n2010 <- data.frame(country_name_2010)  
+i2010 <- data.frame(country_info_2010)
+m2010 <- rbind(country_name_2010, country_info_2010)
+m2010 <- data.frame(m2010)
+m2010 <- t(m2010)
+colnames(m2010) <- c("country", "data")
+m2010 <- data.frame(m2010)
+m2010$year="2010"
+
+n2011 <- data.frame(country_name_2011)  
+i2011 <- data.frame(country_info_2011)
+m2011 <- rbind(country_name_2011, country_info_2011)
+m2011 <- data.frame(m2011)
+m2011 <- t(m2011)
+colnames(m2011) <- c("country", "data")
+m2011 <- data.frame(m2011)
+m2011$year="2011"
+
+n2012 <- data.frame(country_name_2012)  
+i2012 <- data.frame(country_info_2012)
+m2012 <- rbind(country_name_2012, country_info_2012)
+m2012 <- data.frame(m2012)
+m2012 <- t(m2012)
+colnames(m2012) <- c("country", "data")
+m2012 <- data.frame(m2012)
+m2012$year="2012"
+
+n2013 <- data.frame(country_name_2013)  
+i2013 <- data.frame(country_info_2013)
+m2013 <- rbind(country_name_2013, country_info_2013)
+m2013 <- data.frame(m2013)
+m2013 <- t(m2013)
+colnames(m2013) <- c("country", "data")
+m2013 <- data.frame(m2013)
+m2013$year="2013"
+
+n2014 <- data.frame(country_name_2014)  
+i2014 <- data.frame(country_info_2014)
+m2014 <- rbind(country_name_2014, country_info_2014)
+m2014 <- data.frame(m2014)
+m2014 <- t(m2014)
+colnames(m2014) <- c("country", "data")
+m2014 <- data.frame(m2014)
+m2014$year="2014"
+
+n2015 <- data.frame(country_name_2015)  
+i2015 <- data.frame(country_info_2015)
+m2015 <- rbind(country_name_2015, country_info_2015)
+m2015 <- data.frame(m2015)
+m2015 <- t(m2015)
+colnames(m2015) <- c("country", "data")
+m2015 <- data.frame(m2015)
+m2015$year="2015"
+
+n2016 <- data.frame(country_name_2016)  
+i2016 <- data.frame(country_info_2016)
+m2016 <- rbind(country_name_2016, country_info_2016)
+m2016 <- data.frame(m2016)
+m2016 <- t(m2016)
+colnames(m2016) <- c("country", "data")
+m2016 <- data.frame(m2016)
+m2016$year="2016"
+
+facebook <- rbind(m2010, m2011, m2012, m2013, m2014, m2015, m2016) 
+facebook$data <- str_replace_all(facebook$data, ",", "")
+facebook$subscription <- stri_extract_first_regex(facebook$data, "[0-9]+")
+facebook$penetration <- str_extract(facebook$data, "((\\d\\.\\d+)\\%)")
+facebook$penetration <- str_replace_all(facebook$penetration, "%", "")
+facebook$data <- NULL
+
+DATA <- merge(DATA, facebook, by=c("year","country"))
+DATA <- cbind(DATA, dummy(DATA$EVENT_TYPE))
+```
+
+
+
+
+
+
+
+
+
+
+
 
 
 
