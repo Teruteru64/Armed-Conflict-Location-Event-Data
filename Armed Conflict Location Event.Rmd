@@ -13,6 +13,9 @@ opts_chunk$set(message = FALSE, error = TRUE, fig.pos = 'H', tidy.opts=list(widt
 ```
 
 ```{r library, include=FALSE, echo=FALSE}
+library(shiny)
+library(shinydashboard)
+library(scales)
 library(foreign) #read foreign file objects
 install.packages("dplyr", repos = "https://cran.rstudio.com/")
 library(dplyr) #manipulate data
@@ -28,9 +31,11 @@ install.packages("repmis", repos = "https://cran.rstudio.com/")
 library(repmis)
 library(data.table)
 library(magrittr)
+install.packages("stargazer")
 library(stargazer)
 install.packages("broom", repos = "https://cran.rstudio.com/")
 library(broom)
+install.packages("arm")
 library(arm)
 library(readr)
 library(readxl)
@@ -49,28 +54,52 @@ install.packages("ROAuth", repos = "https://cran.rstudio.com/")
 library(ROAuth)
 install.packages("stringi", repos = "https://cran.rstudio.com/")
 library(stringi)
+install.packages("plm", repos = "https://cran.rstudio.com/")
+library(plm)
 ```
 
 ```{r data, include=FALSE, echo=FALSE}
+
 ACLED <- read_csv("~/Armed-Conflict-Location-Event-Data/ACLED-Version-7-All-Africa-1997-2016_csv_dyadic-file.csv")
 ACLED <- subset(ACLED, select = c("YEAR","EVENT_TYPE", "COUNTRY"))
 names(ACLED)[names(ACLED) == 'COUNTRY'] <- 'Country'
 names(ACLED)[names(ACLED) == 'YEAR'] <- 'year'
 ACLED <- ACLED %>% dplyr::group_by(year, Country, EVENT_TYPE) %>% dplyr::summarize(count = n())
+
 HDI <- read_excel("~/Armed-Conflict-Location-Event-Data/Statistical model/Human development index/HDIversion2.xlsx")
 HDI <- HDI[, -1]
 HDI <- HDI %>% gather(key = year, value = score, -Country)
-democracy <- read_excel("~/Armed-Conflict-Location-Event-Data/Statistical model/Polity IV/p4v2016.xls")
-democracy <- democracy[, -c(1:2)]
+#Renaming variables
+
+HDI$Country <- recode(HDI$Country,"Congo"="Republic of Congo")
+HDI$Country <- recode(HDI$Country,"Congo (Democratic Republic of the)"="Democratic Republic of Congo")
+HDI$Country <- recode(HDI$Country,"C�te d'Ivoire"="Ivory Coast")
+HDI$Country <- recode(HDI$Country,"Tanzania (United Republic of)"="Tanzania")
+
+
+
 DATA <- merge(ACLED, HDI, by=c("year","Country"))
 names(DATA)[names(DATA) == 'Country'] <- 'country'
-DATA <- merge(DATA, democracy, by=c("year","country"))
 DATA <- subset(DATA, year >= 2010)
 DATA <- apply(DATA,2,toupper)
+
+
+GDP <- read_excel("~/Armed-Conflict-Location-Event-Data/Statistical model/GDP per capita/GDP.xlsx")
+View(GDP)
+GDP$Country <- recode(GDP$Country,"CONGO"="Republic of Congo")
+GDP$Country <- recode(GDP$Country,"CONGO (DEMOCRATIC REPUBLIC OF THE)"="Democratic Republic of Congo")
+GDP$Country <- recode(GDP$Country,"CÔTE D'IVOIRE"="Ivory Coast")
+GDP$Country <- recode(GDP$Country,"TANZANIA (UNITED REPUBLIC OF)"="Tanzania")
+
+GDP <- GDP %>% gather(key = year, value = score, -Country)
+names(GDP)[names(GDP)== "score"] <- "GDP"
+names(GDP)[names(GDP)== "Country"] <- "country"
+GDP <- apply(GDP,2,toupper)
+DATA <- merge(DATA, GDP, by=c("year","country"))
 ```
 
 ```{r facebook data, include=FALSE, echo=FALSE}
-#2010Country names
+#2010 Country names
 url <- "https://web.archive.org/web/20101008034936/http://internetworldstats.com/africa.htm"
 css <- "img+ font b"
 url_parsed <- read_html(url)
@@ -224,20 +253,70 @@ facebook$penetration <- str_extract(facebook$data, "((\\d\\.\\d+)\\%)")
 facebook$penetration <- str_replace_all(facebook$penetration, "%", "")
 facebook$data <- NULL
 
+facebook$country <- recode(facebook$country ,"CONGO"="Republic of Congo")
+facebook$country <- recode(facebook$country ,"CONGO, Democratic Republic of the, (ex-ZAIRE)"="Democratic Republic of Congo")
+facebook$country  <- recode(facebook$country ,"COTE D'IVOIRE (Ivory Coast)"="Ivory Coast")
+facebook$country <- recode(facebook$country ,"TANZANIA"="Tanzania")
+
 DATA <- merge(DATA, facebook, by=c("year","country"))
-DATA <- cbind(DATA, dummy(DATA$EVENT_TYPE))
+table(DATA$country)
 ```
 
+```{r interactive plot, include=FALSE, echo=FALSE}
+ui <- fluidPage(
+  titlePanel("Armed Conflict Location Event"), # App title
+  
+  sidebarLayout(
+    sidebarPanel( # Sidebar panel for inputs
+      selectInput(inputId = "EVENT_TYPE", 
+                  label = "Event type",
+                  choices = unique(DATA$EVENT_TYPE),multiple=TRUE
+      )),
+    sidebarPanel( # Sidebar panel for inputs
+      selectInput(inputId = "country", 
+                  label = "Country",
+                  choices = unique(DATA$country),multiple=TRUE
+      )),
+    mainPanel(
+      tabsetPanel(
+        tabPanel("Armed Conflict Location Event", plotOutput("lineChart"))
+        # Output: Line Chart
+      )
+    )
+  ))
 
 
+server <- function(input, output) {
+  
+  # make line charts of events
+  output$lineChart <- renderPlot({
+    g<-ggplot(data=event(),aes(x=year, y=count))
+    g<-g+geom_line() + 
+      geom_point() +
+      scale_x_discrete(limits = year) + 
+      scale_y_continuous(labels=percent) +
+      ggtitle( paste("Armed Conflicts")) +
+      xlab("Year") + ylab("The number of reported cases")
+    g
+    
+  })
+  
+}
+
+shinyApp(ui = ui, server = server)
 
 
+##for in case lists
+c("STRATEGIC DEVELOPMENT","BATTLE-NO CHANGE OF TERRITORY","VIOLENCE AGAINST CIVILIANS","RIOTS/PROTESTS","BATTLE-GOVERNMENT REGAINS TERRITORY","REMOTE VIOLENCE","VIOLENCE AGAINST CIVILIANS","BATTLE-NON-STATE ACTOR OVERTAKES TERRITORY","NON-VIOLENT TRANSFER OF TERRITORY")
 
+c("ALGERIA","ANGOLA","BENIN","BOTSWANA","BURKINA FASO","BURUNDI","CENTRAL AFRICAN REPUBLIC","CHAD","DJIBOUTI", "EGYPT", "EQUATORIAL GUINEA", "ERITREA", "ETHIOPIA", "GABON", "GAMBIA", "GHANA", "GUINEA", "GUINEA-BISSAU", "KENYA", "LESOTHO", "LIBERIA", "LIBYA", "MADAGASCAR", "MALAWI", "MALI", "MAURITANIA", "MOROCCO", "MOZAMBIQUE", "NAMIBIA", "NIGER", "NIGERIA", "RWANDA", "SENEGAL", "SIERRA LEONE", "SOUTH AFRICA", "SOUTH SUDAN", "SUDAN", "SWAZILAND", "TOGO", "TUNISIA", "UGANDA", "ZAMBIA", "ZIMBABWE")
+```
 
-
-
-
-
+```{r fixed effect regression, include=FALSE, echo=FALSE}
+fixed <- plm(count ~ penetration, data=DATA, index=c("country", "year"), model="within")
+summary(fixed)
+#see https://www.princeton.edu/~otorres/Panel101R.pdf
+```
 
 
 
