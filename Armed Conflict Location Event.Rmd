@@ -5,6 +5,8 @@ date: "11/24/2017"
 output: pdf_document
 ---
 
+rm(list = ls())
+
 ```{r setup, include=FALSE, echo=FALSE}
 library(knitr)
 opts_chunk$set(message = FALSE, error = TRUE, fig.pos = 'H', tidy.opts=list(width.cutoff=65), tidy=TRUE, fig.path='figs/', cache.path='cache/graphics-', 
@@ -14,6 +16,7 @@ opts_chunk$set(message = FALSE, error = TRUE, fig.pos = 'H', tidy.opts=list(widt
 
 ```{r library, include=FALSE, echo=FALSE}
 library(shiny)
+install.packages("shinydashboard")
 library(shinydashboard)
 library(scales)
 library(foreign) #read foreign file objects
@@ -56,46 +59,52 @@ install.packages("stringi", repos = "https://cran.rstudio.com/")
 library(stringi)
 install.packages("plm", repos = "https://cran.rstudio.com/")
 library(plm)
+install.packages("countrycode")
+library(countrycode)
 ```
 
 ```{r data, include=FALSE, echo=FALSE}
 
 ACLED <- read_csv("~/Armed-Conflict-Location-Event-Data/ACLED-Version-7-All-Africa-1997-2016_csv_dyadic-file.csv")
 ACLED <- subset(ACLED, select = c("YEAR","EVENT_TYPE", "COUNTRY"))
-names(ACLED)[names(ACLED) == 'COUNTRY'] <- 'Country'
+names(ACLED)[names(ACLED) == 'COUNTRY'] <- "country"
 names(ACLED)[names(ACLED) == 'YEAR'] <- 'year'
-ACLED <- ACLED %>% dplyr::group_by(year, Country, EVENT_TYPE) %>% dplyr::summarize(count = n())
+ACLED <- ACLED %>% dplyr::group_by(year, country, EVENT_TYPE) %>% dplyr::summarize(count = n())
+ACLED <- apply(ACLED,2,toupper)
 
-HDI <- read_excel("~/Armed-Conflict-Location-Event-Data/Statistical model/Human development index/HDIversion2.xlsx")
-HDI <- HDI[, -1]
-HDI <- HDI %>% gather(key = year, value = score, -Country)
-#Renaming variables
+cat_social_conflict <- c("RIOTS/PROTESTS", "VIOLENCE AGAINST CIVILIANS")
 
-HDI$Country <- recode(HDI$Country,"Congo"="Republic of Congo")
-HDI$Country <- recode(HDI$Country,"Congo (Democratic Republic of the)"="Democratic Republic of Congo")
-HDI$Country <- recode(HDI$Country,"C�te d'Ivoire"="Ivory Coast")
-HDI$Country <- recode(HDI$Country,"Tanzania (United Republic of)"="Tanzania")
+ACLED <- ACLED %>% 
+  as.data.frame()
+ACLED2 <- ACLED %>% 
+  dplyr::mutate(dep1 = ifelse(EVENT_TYPE %in% cat_social_conflict, "CIVILIAN INVOLVED CONFLICT", "ARMED GROUP CONFLICT" ))
 
-
-
-DATA <- merge(ACLED, HDI, by=c("year","Country"))
-names(DATA)[names(DATA) == 'Country'] <- 'country'
-DATA <- subset(DATA, year >= 2010)
-DATA <- apply(DATA,2,toupper)
-
+ACLED2$count <- as.numeric(ACLED2$count)
+ACLED2 <- ACLED2 %>% 
+  ungroup() %>%
+  dplyr::group_by(country, year, dep1) %>%
+  dplyr::summarise(dep2 = sum(count)) %>%
+  spread(dep1, dep2)
 
 GDP <- read_excel("~/Armed-Conflict-Location-Event-Data/Statistical model/GDP per capita/GDP.xlsx")
-View(GDP)
+GDP <- apply(GDP,2,toupper)
+GDP <- as.data.frame(GDP)
 GDP$Country <- recode(GDP$Country,"CONGO"="Republic of Congo")
 GDP$Country <- recode(GDP$Country,"CONGO (DEMOCRATIC REPUBLIC OF THE)"="Democratic Republic of Congo")
 GDP$Country <- recode(GDP$Country,"CÔTE D'IVOIRE"="Ivory Coast")
 GDP$Country <- recode(GDP$Country,"TANZANIA (UNITED REPUBLIC OF)"="Tanzania")
-
-GDP <- GDP %>% gather(key = year, value = score, -Country)
-names(GDP)[names(GDP)== "score"] <- "GDP"
+GDP <- as.data.frame(GDP)
 names(GDP)[names(GDP)== "Country"] <- "country"
-GDP <- apply(GDP,2,toupper)
-DATA <- merge(DATA, GDP, by=c("year","country"))
+names(GDP)[names(GDP)== "score"] <- "GDP"
+GDP <- GDP %>% gather(key = year, value = GDP, -country)
+DATA <- merge(ACLED2, GDP, by=c("year","country"))
+DATA$iso3c <- countrycode(DATA$country, 'country.name','iso3c', warn = T)
+
+#Dependent variables natural log 
+DATA$`ARMED GROUP CONFLICT` <- DATA$`ARMED GROUP CONFLICT` %>% as.numeric()
+DATA$`CIVILIAN INVOLVED CONFLICT`<- DATA$`CIVILIAN INVOLVED CONFLICT` %>% as.numeric()
+DATA$lnmilitary <- log(DATA$`ARMED GROUP CONFLICT`)
+DATA$lnsocial <- log(DATA$`CIVILIAN INVOLVED CONFLICT`)
 ```
 
 ```{r facebook data, include=FALSE, echo=FALSE}
@@ -249,17 +258,18 @@ m2016$year="2016"
 facebook <- rbind(m2010, m2011, m2012, m2013, m2014, m2015, m2016) 
 facebook$data <- str_replace_all(facebook$data, ",", "")
 facebook$subscription <- stri_extract_first_regex(facebook$data, "[0-9]+")
-facebook$penetration <- str_extract(facebook$data, "((\\d\\.\\d+)\\%)")
+facebook$penetration <- str_extract(facebook$data, "((\\d+\\.*\\d*)\\%)")
 facebook$penetration <- str_replace_all(facebook$penetration, "%", "")
 facebook$data <- NULL
+facebook$country <- gsub("EQUATORIAL\nGUINEA","EQUATORIAL GUINEA", facebook$country) 
+facebook$country <-gsub("CENTRAL AFRICAN\n REPUBLIC","CENTRAL AFRICAN REPUBLIC", facebook$country) 
+facebook <- data.frame(lapply(facebook, as.character), stringsAsFactors=FALSE)
+facebook$iso3c <- countrycode(facebook$country, 'country.name', 
+                             'iso3c', warn = T)
+facebook<-data.frame(facebook)
 
-facebook$country <- recode(facebook$country ,"CONGO"="Republic of Congo")
-facebook$country <- recode(facebook$country ,"CONGO, Democratic Republic of the, (ex-ZAIRE)"="Democratic Republic of Congo")
-facebook$country  <- recode(facebook$country ,"COTE D'IVOIRE (Ivory Coast)"="Ivory Coast")
-facebook$country <- recode(facebook$country ,"TANZANIA"="Tanzania")
-
-DATA <- merge(DATA, facebook, by=c("year","country"))
-table(DATA$country)
+DATA <- merge(DATA, facebook, by=c("year","iso3c"))
+DATA <- subset(DATA, select = -c(country.y))
 ```
 
 ```{r interactive plot, include=FALSE, echo=FALSE}
@@ -317,6 +327,4 @@ fixed <- plm(count ~ penetration, data=DATA, index=c("country", "year"), model="
 summary(fixed)
 #see https://www.princeton.edu/~otorres/Panel101R.pdf
 ```
-
-
 
