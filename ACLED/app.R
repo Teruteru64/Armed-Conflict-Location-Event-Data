@@ -1,17 +1,15 @@
 
 ui <- fluidPage(
   titlePanel("Armed Conflict Location Event"), # App title
-  
   sidebarLayout(
     sidebarPanel( # Sidebar panel for inputs
       selectInput(inputId = "EVENT_TYPE", 
                   label = "Event type",
-                  choices = unique(DATA$EVENT_TYPE),multiple=TRUE
-      )),
-    sidebarPanel( # Sidebar panel for inputs
+                  choices = unique(ACLED$EVENT_TYPE)
+      ),
       selectInput(inputId = "country", 
                   label = "Country",
-                  choices = unique(DATA$country),multiple=TRUE
+                  choices = unique(ACLED$country)
       )),
     mainPanel(
       tabsetPanel(
@@ -23,20 +21,24 @@ ui <- fluidPage(
 
 
 server <- function(input, output) {
+
+  ACLED$count <- as.numeric(ACLED$count)
+  
+  ACLED.new <- reactive({
+    filter(ACLED, EVENT_TYPE==input$EVENT_TYPE, country==input$country)
+  })
   
   # make line charts of events
   output$lineChart <- renderPlot({
-    g<-ggplot(data=event(),aes(x=year, y=count))
-    g<-g+geom_line() + 
-      geom_point() +
-      scale_x_discrete(limits = year) + 
-      scale_y_continuous(labels=percent) +
-      ggtitle( paste("Armed Conflicts")) +
-      xlab("Year") + ylab("The number of reported cases")
-    g
-    
-  })
+  g<-ggplot(data=ACLED.new(), aes(x=year, y=count, group=country))
+  g<-g+geom_line(color="steelblue") + 
+    geom_point() +
+    xlab("Year") + ylab("The number of reported cases")
+  g
   
+})
+
 }
+
 
 shinyApp(ui = ui, server = server)
