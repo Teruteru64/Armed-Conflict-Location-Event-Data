@@ -1,13 +1,12 @@
 ---
 title: "Armed Conflict Location Event"
-author: "Akira Sasaki"
+author: "Akira Sasaki, Eduardo Acostamadiedo, Oliver Recep Çok"
 date: "11/24/2017"
 output: pdf_document
 ---
 
-rm(list = ls())
-
 ```{r setup, include=FALSE, echo=FALSE}
+rm(list = ls())
 library(knitr)
 opts_chunk$set(message = FALSE, error = TRUE, fig.pos = 'H', tidy.opts=list(width.cutoff=65), tidy=TRUE, fig.path='figs/', cache.path='cache/graphics-', 
            fig.pos ='H', fig.align='center', fig.width = 5, fig.height = 4, fig.show = 'hold',
@@ -15,8 +14,9 @@ opts_chunk$set(message = FALSE, error = TRUE, fig.pos = 'H', tidy.opts=list(widt
 ```
 
 ```{r library, include=FALSE, echo=FALSE}
+install.packages("shiny", repos = "https://cran.rstudio.com/")
 library(shiny)
-install.packages("shinydashboard")
+install.packages("shinydashboard", repos = "https://cran.rstudio.com/")
 library(shinydashboard)
 library(scales)
 library(foreign) #read foreign file objects
@@ -34,11 +34,11 @@ install.packages("repmis", repos = "https://cran.rstudio.com/")
 library(repmis)
 library(data.table)
 library(magrittr)
-install.packages("stargazer")
+install.packages("stargazer", repos = "https://cran.rstudio.com/")
 library(stargazer)
 install.packages("broom", repos = "https://cran.rstudio.com/")
 library(broom)
-install.packages("arm")
+install.packages("arm", repos = "https://cran.rstudio.com/")
 library(arm)
 library(readr)
 library(readxl)
@@ -59,12 +59,14 @@ install.packages("stringi", repos = "https://cran.rstudio.com/")
 library(stringi)
 install.packages("plm", repos = "https://cran.rstudio.com/")
 library(plm)
-install.packages("countrycode")
+install.packages("countrycode", repos = "https://cran.rstudio.com/")
 library(countrycode)
+install.packages("plm", repos = "https://cran.rstudio.com/")
+library(plm)
 ```
 
-```{r data, include=FALSE, echo=FALSE}
-
+```{r DATA, include=FALSE, echo=FALSE}
+#ACLED
 ACLED <- read_csv("~/Armed-Conflict-Location-Event-Data/ACLED-Version-7-All-Africa-1997-2016_csv_dyadic-file.csv")
 ACLED <- subset(ACLED, select = c("YEAR","EVENT_TYPE", "COUNTRY"))
 names(ACLED)[names(ACLED) == 'COUNTRY'] <- "country"
@@ -85,7 +87,9 @@ ACLED2 <- ACLED2 %>%
   dplyr::group_by(country, year, dep1) %>%
   dplyr::summarise(dep2 = sum(count)) %>%
   spread(dep1, dep2)
+ACLED2$iso3c <- countrycode(ACLED2$country, 'country.name','iso3c', warn = T)
 
+#GDP per capita
 GDP <- read_excel("~/Armed-Conflict-Location-Event-Data/Statistical model/GDP per capita/GDP.xlsx")
 GDP <- apply(GDP,2,toupper)
 GDP <- as.data.frame(GDP)
@@ -97,17 +101,18 @@ GDP <- as.data.frame(GDP)
 names(GDP)[names(GDP)== "Country"] <- "country"
 names(GDP)[names(GDP)== "score"] <- "GDP"
 GDP <- GDP %>% gather(key = year, value = GDP, -country)
-DATA <- merge(ACLED2, GDP, by=c("year","country"))
-DATA$iso3c <- countrycode(DATA$country, 'country.name','iso3c', warn = T)
+GDP$iso3c <- countrycode(GDP$country, 'country.name','iso3c', warn = T)
+  
+DATA <- merge(ACLED2, GDP, by=c("year","iso3c"))
 
 #Dependent variables natural log 
 DATA$`ARMED GROUP CONFLICT` <- DATA$`ARMED GROUP CONFLICT` %>% as.numeric()
 DATA$`CIVILIAN INVOLVED CONFLICT`<- DATA$`CIVILIAN INVOLVED CONFLICT` %>% as.numeric()
 DATA$lnmilitary <- log(DATA$`ARMED GROUP CONFLICT`)
 DATA$lnsocial <- log(DATA$`CIVILIAN INVOLVED CONFLICT`)
-```
 
-```{r facebook data, include=FALSE, echo=FALSE}
+#facebook
+
 #2010 Country names
 url <- "https://web.archive.org/web/20101008034936/http://internetworldstats.com/africa.htm"
 css <- "img+ font b"
@@ -269,62 +274,37 @@ facebook$iso3c <- countrycode(facebook$country, 'country.name',
 facebook<-data.frame(facebook)
 
 DATA <- merge(DATA, facebook, by=c("year","iso3c"))
-DATA <- subset(DATA, select = -c(country.y))
+DATA <- subset(DATA, select = -c(country.y, country))
+DATA$penetration <- as.numeric(DATA$penetration)
+names(DATA)[names(DATA)== "country.x"] <- "country"
+
+#log GDP
+DATA$GDP <- as.numeric(as.character(DATA$GDP))
+DATA$lnGDP <- log1p(DATA$GDP)
+
+
 ```
 
-```{r interactive plot, include=FALSE, echo=FALSE}
-ui <- fluidPage(
-  titlePanel("Armed Conflict Location Event"), # App title
-  
-  sidebarLayout(
-    sidebarPanel( # Sidebar panel for inputs
-      selectInput(inputId = "EVENT_TYPE", 
-                  label = "Event type",
-                  choices = unique(DATA$EVENT_TYPE),multiple=TRUE
-      )),
-    sidebarPanel( # Sidebar panel for inputs
-      selectInput(inputId = "country", 
-                  label = "Country",
-                  choices = unique(DATA$country),multiple=TRUE
-      )),
-    mainPanel(
-      tabsetPanel(
-        tabPanel("Armed Conflict Location Event", plotOutput("lineChart"))
-        # Output: Line Chart
-      )
-    )
-  ))
-
-
-server <- function(input, output) {
-  
-  # make line charts of events
-  output$lineChart <- renderPlot({
-    g<-ggplot(data=event(),aes(x=year, y=count))
-    g<-g+geom_line() + 
-      geom_point() +
-      scale_x_discrete(limits = year) + 
-      scale_y_continuous(labels=percent) +
-      ggtitle( paste("Armed Conflicts")) +
-      xlab("Year") + ylab("The number of reported cases")
-    g
-    
-  })
-  
-}
-
-shinyApp(ui = ui, server = server)
-
-
-##for in case lists
-c("STRATEGIC DEVELOPMENT","BATTLE-NO CHANGE OF TERRITORY","VIOLENCE AGAINST CIVILIANS","RIOTS/PROTESTS","BATTLE-GOVERNMENT REGAINS TERRITORY","REMOTE VIOLENCE","VIOLENCE AGAINST CIVILIANS","BATTLE-NON-STATE ACTOR OVERTAKES TERRITORY","NON-VIOLENT TRANSFER OF TERRITORY")
-
-c("ALGERIA","ANGOLA","BENIN","BOTSWANA","BURKINA FASO","BURUNDI","CENTRAL AFRICAN REPUBLIC","CHAD","DJIBOUTI", "EGYPT", "EQUATORIAL GUINEA", "ERITREA", "ETHIOPIA", "GABON", "GAMBIA", "GHANA", "GUINEA", "GUINEA-BISSAU", "KENYA", "LESOTHO", "LIBERIA", "LIBYA", "MADAGASCAR", "MALAWI", "MALI", "MAURITANIA", "MOROCCO", "MOZAMBIQUE", "NAMIBIA", "NIGER", "NIGERIA", "RWANDA", "SENEGAL", "SIERRA LEONE", "SOUTH AFRICA", "SOUTH SUDAN", "SUDAN", "SWAZILAND", "TOGO", "TUNISIA", "UGANDA", "ZAMBIA", "ZIMBABWE")
-```
 
 ```{r fixed effect regression, include=FALSE, echo=FALSE}
-fixed <- plm(count ~ penetration, data=DATA, index=c("country", "year"), model="within")
-summary(fixed)
-#see https://www.princeton.edu/~otorres/Panel101R.pdf
+#see https://cran.r-project.org/web/packages/plm/vignettes/plm.pdf
+fe.lnmilitary <- plm(lnmilitary ~ penetration + lnGDP, index=c("country", "year"), data=DATA, effect="twoways")
+fe.lnsocial <- plm(lnsocial ~ penetration + lnGDP, index=c("country", "year"), data=DATA, effect="twoways")
+summary(fe.lnmilitary)
+summary(fe.lnsocial)
+``` 
+
+```{r regression table, echo=FALSE, results='asis'}
+stargazer(fe.lnmilitary, fe.lnsocial,
+          header = FALSE, float = TRUE,
+          report = ('vc*p'),
+          title            = "Two-way Fixed Effect Regression",
+          covariate.labels = c("Facebook penetration", "GDP per capita (log)"),
+          dep.var.caption = "Conflict type",
+          dep.var.labels.include = FALSE,
+          column.labels = c("Armed Group Conflict", "Civilian Conflict"),
+          out = "html"
+)
 ```
+
 
