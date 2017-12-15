@@ -61,10 +61,12 @@ install.packages("plm", repos = "https://cran.rstudio.com/")
 library(plm)
 install.packages("countrycode")
 library(countrycode)
+install.packages("plm")
+library(plm)
 ```
 
-```{r data, include=FALSE, echo=FALSE}
-
+```{r DATA, include=FALSE, echo=FALSE}
+#ACLED
 ACLED <- read_csv("~/Armed-Conflict-Location-Event-Data/ACLED-Version-7-All-Africa-1997-2016_csv_dyadic-file.csv")
 ACLED <- subset(ACLED, select = c("YEAR","EVENT_TYPE", "COUNTRY"))
 names(ACLED)[names(ACLED) == 'COUNTRY'] <- "country"
@@ -87,6 +89,7 @@ ACLED2 <- ACLED2 %>%
   spread(dep1, dep2)
 ACLED2$iso3c <- countrycode(ACLED2$country, 'country.name','iso3c', warn = T)
 
+#GDP per capita
 GDP <- read_excel("~/Armed-Conflict-Location-Event-Data/Statistical model/GDP per capita/GDP.xlsx")
 GDP <- apply(GDP,2,toupper)
 GDP <- as.data.frame(GDP)
@@ -107,9 +110,9 @@ DATA$`ARMED GROUP CONFLICT` <- DATA$`ARMED GROUP CONFLICT` %>% as.numeric()
 DATA$`CIVILIAN INVOLVED CONFLICT`<- DATA$`CIVILIAN INVOLVED CONFLICT` %>% as.numeric()
 DATA$lnmilitary <- log(DATA$`ARMED GROUP CONFLICT`)
 DATA$lnsocial <- log(DATA$`CIVILIAN INVOLVED CONFLICT`)
-```
 
-```{r facebook data, include=FALSE, echo=FALSE}
+#facebook
+
 #2010 Country names
 url <- "https://web.archive.org/web/20101008034936/http://internetworldstats.com/africa.htm"
 css <- "img+ font b"
@@ -272,18 +275,31 @@ facebook<-data.frame(facebook)
 
 DATA <- merge(DATA, facebook, by=c("year","iso3c"))
 DATA <- subset(DATA, select = -c(country.y, country))
+DATA$penetration <- as.numeric(DATA$penetration)
 
 #log subscription
-DATA$subscription <- as.numeric(as.character(DATA$subscription))
-DATA$lnsubscription <- log1p(DATA$subscription)
-
+DATA$GDP <- as.numeric(as.character(DATA$GDP))
+DATA$lnGDP <- log1p(DATA$GDP)
 names(DATA)[names(DATA)== "country.x"] <- "country"
+
 ```
 
 
 ```{r fixed effect regression, include=FALSE, echo=FALSE}
-fixed <- plm(count ~ penetration, data=DATA, index=c("country", "year"), model="within")
-summary(fixed)
-#see https://www.princeton.edu/~otorres/Panel101R.pdf
+#see https://cran.r-project.org/web/packages/plm/vignettes/plm.pdf
+fe.lnmilitary <- plm(lnmilitary ~ penetration + lnGDP, index=c("country", "year"), data=DATA, effect="twoways")
+fe.lnsocial <- plm(lnsocial ~ penetration + lnGDP, index=c("country", "year"), data=DATA, effect="twoways")
+summary(fe.lnmilitary)
+summary(fe.lnsocial)
+``` 
+
+```{r regression table, include=FALSE, echo=FALSE}
+stargazer(fe.lnmilitary, fe.lnsocial, type = "html",
+          title            = "Table 1.",
+          covariate.labels = c("Facebook penetration(%)", "GDP per capita (log)"),
+          dep.var.caption  = "Conflict type",
+          column.labels = c("Armed Group Conflict", "Civilian Coflict")
+)
 ```
+
 
