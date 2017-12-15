@@ -7,13 +7,13 @@ output: pdf_document
 
 ## Introduction
 
-Violent conflicts have been continually existing throughout human, but late into the 20th century the types of conflicts we see are smaller in scale and seem to be less deadly. As we head further into the 21st century the relevance of social media has significantly risen, because more and more people want to be connected to each other. This network of connection has changed people's ability to instantly communicate with each other across the world. We hypothesize that the more Facebook users in a country the likelihood of internal violent strifes are reported to their social media platform, meaning the world. We expect this correlation to be stronger among the civilian population as we would think that the armed groups engaging would want to limit the knowledge of their actions as much as they can. We will use the Armed Conflict Location & Event Data Project (ACLED) database and Facebook user data to determine how much the data can explain our hypothesis.
+Violent conflicts have been continually existing throughout human history, but late into the 20th century the types of conflicts we see are smaller in scale and seem to be less deadly. As we head further into the 21st century the relevance of social media has significantly risen, because more and more people want to be connected to each other. This network of connection has changed people’s ability to instantly communicate with each other across the world. We hypothesize that the more Facebook users in a country the likelihood of internal violent strifes are reported to their social media platform, meaning the world. We expect this correlation to be stronger among the civilian population as we would think that civilians want to be heard and seen by the world whereas the armed groups engaging would want to limit the knowledge of their actions as much as they can. We will use the Armed Conflict Location & Event Data Project (ACLED) dataset and Facebook user data to determine how much the data can explain our hypothesis.
 
 ## Data Cleaning
 
-Since we wanted to find a way to measure the correlation of the number or reported conflicts and Facebook penetration, we used the Armed Conflict Location & Event Data Project (ACLED) dataset set to determine which variables would be relevant. We needed to determine a time period to properly compare these conflicts with the Facebook user data. For this reason, we agreed to only select the "YEAR", "EVENT_TYPE", "COUNTRY" variables out of the ACLED dataset for our project. The “COUNTRY” variable became our limiting factor as most the countries in the world do not experience armed conflict. 
+Since we wanted to find a way to measure the correlation of the number of reported conflicts and Facebook penetration, we used the Armed Conflict Location & Event Data Project (ACLED) dataset set to determine which variables would be relevant. We needed to determine a time period to properly compare these conflicts with the Facebook user data. For this reason, we agreed to only select the “YEAR”, “EVENT_TYPE”, “COUNTRY” variables out of the ACLED dataset for our project. The “COUNTRY” variable became our limiting factor as most of the countries in the world do not experience armed conflict.
 
-To make the variables more accessible, we transformed both “YEAR” and “COUNTRY” into “year” and “country” respectively. The most important variable that we had to transform was the “EVENT_TYPE”. We had to determine which armed conflict events would be classified as either a “CIVILIAN INVOLVED CONFLICT” or an “ARMED GROUP CONFLICT”. As “CIVILIAN INVOLVED CONFLICT”, we included "RIOTS/PROTESTS" and "VIOLENCE AGAINST CIVILIANS" from ACLED and the rest go to “ARMED GROUP CONFLICT”. After determining this we then mutated these different types into either one of these two classifications, which would become our dependent variables. We implemented all of these changes into a new dataset called ACLED2.
+To make the variables more accessible, we transformed both “YEAR” and “COUNTRY” into “year” and “country” respectively. The most important variable that we had to transform was the “EVENT_TYPE”. We had to determine which armed conflict events would be classified as either a “CIVILIAN INVOLVED CONFLICT” or an “ARMED GROUP CONFLICT”. As “CIVILIAN INVOLVED CONFLICT”, we included “RIOTS/PROTESTS” and “VIOLENCE AGAINST CIVILIANS” from ACLED and the rest were grouped into “ARMED GROUP CONFLICT”. After determining this we then mutated these different types into either one of these two classifications, which would become our dependent variables. We implemented all ofthese changes into a new dataset called ACLED2.
 
 Since there were still around 4000 observations of different instances of conflicts in ACLED2, we wanted to compile the dataset by year and country. We tied all the conflicts in each country for that year into one row. This significantly decreased the number of rows in ACLED2, which increased the readability of the data.
 
@@ -21,7 +21,7 @@ In the GDP dataset we needed to have a variable that could be consistent enough 
 
 In addition to the already existing variables “CIVILIAN INVOLVED CONFLICT” and “ARMED GROUP CONFLICT”, we wanted to create new variables that represented the rate of conflicts for these countries. By taking the natural log of the percentage of both previous variables, we created the “lnsocial” (for “CIVILIAN INVOLVED CONFLICT”) and the “lnmilitary” (for “ARMED GROUP CONFLICT”) variables for the DATA dataset.
 
-Finally, we needed to add our social media variable to measure the relevance of social media to armed conflicts. Due to not finding the enough data for Twitter, we opted to collect Facebook data instead. By using cascading style sheets, we were able to web scrape data from web.archive.org to for Facebook users across countries. The data scraped was messy and required us to organize the data into a dataset of the number of Facebook users by country code overtime. To measure the relevance of the number of Facebook users (as the variable “subscriptions”) for each country, we created a new variable called “penetration” to determine the number of Facebook users as a percentage of the population. After recoding a few country names in this dataset, we merged it by year and country code with the DATA dataset.
+Finally, we needed to add our social media variable to measure the relevance of social media to armed conflicts. Due to not finding enough data for Twitter, we opted to collect Facebook data instead. By using cascading style sheets, we were able to web scrape data from web.archive.org of Facebook users across countries. The data scraped was messy and required us to organize the data into a dataset of the number of Facebook users by country code overtime. To measure the relevance of the number of Facebook users (as the variable “subscriptions”) for each country, we created a new variable called “penetration” to determine the number of Facebook users as a percentage of the population. After recoding a few countries’ names in this dataset, we merged it by year and country code with the DATA dataset.
 
 ```{r setup, include=FALSE, echo=FALSE}
 library(knitr)
@@ -330,13 +330,13 @@ names(DATA2015)[names(DATA2015) == "ARMED GROUP CONFLICT"] <- "ARMEDGROUPCONFLIC
   
 ## Explanatory Statitical Analysis
   
-In the next section, we explore the relationship between social media and reporting of conflict events in two levels of analysis. The first level is a time comparison between 2010 and 2015. This contrast considers that the number of facebook users increased almost 192 percent in this short time. The second level is the type of conflict divided whether the conflict was civil society related or armed actor related. Between 2010 and 2015, civil associated conflicts increased 225 percent and armed actors 291 percent. 
-  
-  Although the reporting of both types of conflict increased in similar ways, as it will be shown, it seems that in contrast to armed actors conflict events, civil society events are more associated to the increase of Facebook users.
-  
-  The 2015 civil society conflict events graph has an steeper slope than the 2010 plot, indicating that there is more association between facebook users and reports.
-  
-  Turning to the armed actors conflicts, the 2010 and 2015 graph, the steepness of the line is almost the same, it seems that there was no significant association between facebook users and reporting of armed actors events.
+In the next section, we explore the relationship between social media and reporting of conflict events in two levels of analysis. The first level is a time comparison between 2010 and 2015. This contrast considers that the number of Facebook users increased almost 192% in this short time. The second level is the type of conflict divided whether the conflict was civil society related or armed actor related. Between 2010 and 2015, civilian associated conflicts increased by 225% and armed actor associated conflicts increased by 291%.
+
+Although the reporting of both types of conflict increased in similar ways, as it will be shown, it seems that in contrast to armed groups conflict events, civil society events are more associated with the increase of Facebook users in a country.
+
+The 2015 civil society conflict events graph has a steeper slope than the 2010 plot, indicating that there is more of an association between Facebook users and reports.
+
+When looking at the 2010 and 2015 graphs of the armed group conflicts, the steepness of the line is almost the same. For this reason, it seems that there was no significant association between Facebook users and reporting of armed groups events.
   
 ```{r summary statistics 2010, echo=FALSE, results='asis'}
 mydata <- DATA2010
@@ -429,9 +429,9 @@ m4<-coeftest(reg15armed, vcov = vcovHC(reg15armed, "HC1"))
 
 ## Regression Analysis
 
-In our hypothesis, the prevalence of facebook should increase the number of reported conflict cases. In particular, between armed group conflicts and civilian conflicts (riots/protests and violence against civilians), we expect a strong correlation in civilian conflicts due to the nature of the conflicts. For civilian conflicts, it is important that people's voices are heard and attract attention. 
+In our hypothesis, the prevalence of Facebook in a society should increase the number of reported conflict cases. In particular, between armed group conflicts and civilian conflicts (riots/protests and violence against civilians), we expect a strong correlation in civilian conflicts due to the nature of these conflicts. For civilian conflicts, it is important that people’s voices are heard and attract attention.
 
-At first, we examine the effect of facebook penetration on the number of reported conflict cases by OLS regression. We divide the conflicts into two different groups: civilian conflicts and armed group conflicts. Then, we applied the regression respectively. Also, for the sake of comparison, we decided to analyze the data from two different years: 2010 and 2015. The dependent variable is the number of reported conflict cases and our explanatory variable is the penetration of facebook in respective African countries. As a control variable, we included the natural logarithm of GDP per capita as we consider the wealthiness at an individual level correlates with the penetration rate of facebook as well as the frequency of conflicts. The table is the results of respective OLS regression.
+Initially, we examine the effect of Facebook penetration on the number of reported conflict cases with an OLS regression. We divide the conflicts into two different groups: civilian conflicts and armed group conflicts. Then, we applied the regression respectively. Also, for the sake of comparison, we decided to analyze the data from two different years: 2010 and 2015. The dependent variable is the number of reported conflict cases and our explanatory variable is the penetration of Facebook in respective African countries. As a control variable, we included the natural logarithm of GDP per capita as we consider the wealth at an individual level correlates with the penetration rate of Facebook as well as the frequency of conflicts. The following tables are the results of respective OLS regression.
 
 ```{r actual reg output1, echo=FALSE, results='asis'}
 stargazer(m1, m2, 
@@ -445,7 +445,7 @@ stargazer(m1, m2,
           out="html")
 ```
 
-The first table shows the results of the OLS regression on the civilian conflict group.The coefficient of 2015 is bigger than that of 2010, meaning the facebook penetration in 2015 has a stronger magnitude on the increase of civilian conflict cases. However, both coefficients are not statistically significant hence they are unreliable. The impact of GDP per capita on the number of civilian conflicts are significantly different between 2010 and 2015. In 2010 the coefficient was negative but statistically insignificant but in 2015 the coefficient became statistically very significant. According to the coefficient in 2015, 1% increase of GDP per capita increase the number of reported civilian conflicts by 13, which is a substantial magnitude.
+Table 3 illustrates the results of the OLS regression on the civilian conflict group.The coefficient of 2010 is bigger than that of 2015, meaning the Facebook penetration in 2010 has a stronger magnitude on the increase of civilian conflict cases. Both coefficients are statistically significant, in particular for the 2015 data. On the other hand, the results show the impact of GDP per capita on the number of civilian conflicts are negative in both years. The magnitude increase in 2015 and the coefficients are statistically significant for both years.
 
 ```{r actual reg output2, echo=FALSE, results='asis'}
 stargazer(m3, m4, 
@@ -458,9 +458,9 @@ stargazer(m3, m4,
           out = "html")
 ```
 
-The second table describes the results for the armed group conflicts. The coefficients of facebook penetration is in contrast to the previous group. In 2010 the coefficient was negative but in 2015 that turns into positive. The trend is in line with our assumption but why it was negative in 2010 is baffling. One possible explanation is in 2010 the people who had access to facebook could be part of armed group and they tried to conceal the conflicts. Nonetheless, both coefficients are statistically insignificant and unreliable. GDP per capita is unsubstantial and statistically insignificant for both years. 
+Table 4 describes the results for the armed group conflicts. The coefficients of Facebook penetration are both positive but the 2015 data is more statistically significant than the 2010. Also, the coefficient halved from 2010 to 2015. GDP per capita is, in contrast, negative for both years and slightly less statistically significant than the previous model.
 
-We admit those regressions are susceptible to a omitted variable bias. We only included one control variable in the model but since we include many different countries, there so many factors which can play in. In order to control those different factors, we decided to do two-way fixed effect regression between countries and years. The result is below.
+We admit those regressions are susceptible to a omitted variable bias. We only included one control variable in the model, but we included many different countries, which means there there could be a number of factors that affect it. In order to control those different factors, we decided to do two-way fixed effect regression between countries and years. The result is below in Table 5.
 
 ```{r fixed effect regression, include=FALSE, echo=FALSE}
 #see https://cran.r-project.org/web/packages/plm/vignettes/plm.pdf
@@ -482,19 +482,18 @@ stargazer(fe.lnmilitary, fe.lnsocial,
 )
 ``` 
 
-Now it is possible to see interesting results. Facebook penetration became much more statistically significant than the former models. Although, the magnitude of the coefficients are small, the positive correlation is in line with our assumption. However, the interesting finding is that the coefficient is more statistically significant for armed group conflict than civilian conflicts. This is opposite to our intuition. In contrast to facebook penetration, GDP per capita became immensely statistically insignificant and the magnitudes are very small as well.
+Now the results have changed significantly. The coefficients of Facebook penetration became much smaller. It is possible to see the number get bigger from 2010 to 2015, which is in line with our assumption that the more facebook prevails the more people would report, both coefficients are statistically insignificant. On the other hand, the coefficients of GDP per capita became much more statistically significant. The magnitudes are smaller than those in the previous models but GDP per capita seems to have a negative correlation with the number of reported conflict cases.
 
 Also, we found an issue with our model as well. The adjusted-R square became negative in this regression, indicating possibly a misspecification in the model. Also, F-statistics are small for both groups, meaning the model has a space of improvement. In the following, we discuss the possible correction in our model.
 
 ## Conclusion and Future Study
 
-In our hypothesis, we expected the number of reported conflict cases should positively correlate with the facebook penetration as it means people have more channels to report easily. Also, our assumption was that we would see a stronger correlation for civilian conflicts than for armed group conflicts. However, according to our two-way fixed effect analysis, although we see positive correlations for both groups, the trend was stronger for the armed group.
+In our hypothesis, we expected the number of reported conflict cases would positively correlate with the Facebook penetration because it means that people have an easier time with more channels to report these conflicts. Also, our assumption was that we would see a stronger correlation for civilian conflicts than for armed group conflicts. However, according to our two-way fixed effect analysis, although we see positive correlations for both groups, they were not statitically significant.
 
-However, we acknowledge flaws in our model. Firstly, we only use GDP per capita as a control variable but this model is susceptible to a omitted variable bias. Even though we had used the two-way fixed effect model, still non-time variant and non-country variant variables can affect the result. We consider using types of political institution or internet/mobile penetration as control variables but for the time constraint, we needed to compromise on collecting data. 
+We acknowledge flaws in our model. Firstly, we only use GDP per capita as a control variable but this model is susceptible to an omitted variable bias. Even though we had used the two-way fixed effect model, still non-time variant and non-country variant variables can affect the result. We consider using types of political institution or internet/mobile penetration as control variables but for the time constraint, we needed to compromise on collecting data.
 
-Another possible issue with the model is that GDP per capita was not maybe a suitable control variable. In the result, it does not show any statistical significance and the coefficients were even very small. The adjusted R-square is also negative, implying the model is being penalized substantially from including many irrelevant independent variables. In our future study, we would further explore different explanatory variables.
+Another possible issue with the model specification. The adjusted R-square is negative, implying the model is being penalized substantially from including many irrelevant independent variables. In our future study, we would further explore different explanatory variables.
 
-At last, we actually preferred using twitter penetration instead of the facebook since the tool seems more suitable for the use to report. However, it was extremely difficult to obtain the data for our analysis and we also needed to comprise on this account. If time allowed, we would have explored the effect of twitter penetration on the number of reported cases. 
-
+At last, we actually preferred using twitter penetration instead of the Facebook since the tool seems more suitable for the use to report. However, it was extremely difficult to obtain the data for our analysis and we also needed to comprise on this account. If time allowed, we would have explored the effect of twitter penetration on the number of reported cases.
 
 
