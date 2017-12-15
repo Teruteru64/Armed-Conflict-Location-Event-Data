@@ -65,7 +65,7 @@ library(countrycode)
 
 ```{r data, include=FALSE, echo=FALSE}
 
-ACLED <- read_csv("~/Armed-Conflict-Location-Event-Data/ACLED-Version-7-All-Africa-1997-2016_csv_dyadic-file.csv")
+ACLED <- read_csv("ACLED-Version-7-All-Africa-1997-2016_csv_dyadic-file.csv")
 ACLED <- subset(ACLED, select = c("YEAR","EVENT_TYPE", "COUNTRY"))
 names(ACLED)[names(ACLED) == 'COUNTRY'] <- "country"
 names(ACLED)[names(ACLED) == 'YEAR'] <- 'year'
@@ -86,7 +86,7 @@ ACLED2 <- ACLED2 %>%
   dplyr::summarise(dep2 = sum(count)) %>%
   spread(dep1, dep2)
 
-GDP <- read_excel("~/Armed-Conflict-Location-Event-Data/Statistical model/GDP per capita/GDP.xlsx")
+GDP <- read_excel("Statistical model/GDP per capita/GDP.xlsx")
 GDP <- apply(GDP,2,toupper)
 GDP <- as.data.frame(GDP)
 GDP$Country <- recode(GDP$Country,"CONGO"="Republic of Congo")
