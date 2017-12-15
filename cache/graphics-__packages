@@ -41,3 +41,10 @@ Formula
 plm
 countrycode
 bindrcpp
+sandwich
+zoo
+lmtest
+ggExtra
+lattice
+survival
+Hmisc
