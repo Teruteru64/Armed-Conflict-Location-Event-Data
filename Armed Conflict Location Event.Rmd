@@ -280,69 +280,10 @@ DATA$lnsubscription <- log1p(DATA$subscription)
 names(DATA)[names(DATA)== "country.x"] <- "country"
 ```
 
-```{r interactive plot, include=FALSE, echo=FALSE}
-ui <- fluidPage(
-  titlePanel("Armed Conflict Location Event"), # App title
-  
-  sidebarLayout(
-    sidebarPanel( # Sidebar panel for inputs
-      selectInput(inputId = "EVENT_TYPE", 
-                  label = "Event type",
-                  choices = unique(DATA$EVENT_TYPE),multiple=TRUE
-      )),
-    sidebarPanel( # Sidebar panel for inputs
-      selectInput(inputId = "country", 
-                  label = "Country",
-                  choices = unique(DATA$country),multiple=TRUE
-      )),
-    mainPanel(
-      tabsetPanel(
-        tabPanel("Armed Conflict Location Event", plotOutput("lineChart"))
-        # Output: Line Chart
-      )
-    )
-  ))
-
-
-server <- function(input, output) {
-  
-  # make line charts of events
-  output$lineChart <- renderPlot({
-    g<-ggplot(data=event(),aes(x=year, y=count))
-    g<-g+geom_line() + 
-      geom_point() +
-      scale_x_discrete(limits = year) + 
-      scale_y_continuous(labels=percent) +
-      ggtitle( paste("Armed Conflicts")) +
-      xlab("Year") + ylab("The number of reported cases")
-    g
-    
-  })
-  
-}
-
-shinyApp(ui = ui, server = server)
-
-
-##for in case lists
-c("STRATEGIC DEVELOPMENT","BATTLE-NO CHANGE OF TERRITORY","VIOLENCE AGAINST CIVILIANS","RIOTS/PROTESTS","BATTLE-GOVERNMENT REGAINS TERRITORY","REMOTE VIOLENCE","VIOLENCE AGAINST CIVILIANS","BATTLE-NON-STATE ACTOR OVERTAKES TERRITORY","NON-VIOLENT TRANSFER OF TERRITORY")
-
-c("ALGERIA","ANGOLA","BENIN","BOTSWANA","BURKINA FASO","BURUNDI","CENTRAL AFRICAN REPUBLIC","CHAD","DJIBOUTI", "EGYPT", "EQUATORIAL GUINEA", "ERITREA", "ETHIOPIA", "GABON", "GAMBIA", "GHANA", "GUINEA", "GUINEA-BISSAU", "KENYA", "LESOTHO", "LIBERIA", "LIBYA", "MADAGASCAR", "MALAWI", "MALI", "MAURITANIA", "MOROCCO", "MOZAMBIQUE", "NAMIBIA", "NIGER", "NIGERIA", "RWANDA", "SENEGAL", "SIERRA LEONE", "SOUTH AFRICA", "SOUTH SUDAN", "SUDAN", "SWAZILAND", "TOGO", "TUNISIA", "UGANDA", "ZAMBIA", "ZIMBABWE")
-```
 
 ```{r fixed effect regression, include=FALSE, echo=FALSE}
 fixed <- plm(count ~ penetration, data=DATA, index=c("country", "year"), model="within")
 summary(fixed)
 #see https://www.princeton.edu/~otorres/Panel101R.pdf
-
-ACLED$count <- as.numeric(ACLED$count)
-    g<-ggplot(data=ACLED,aes(x=year, y=count, group=country))
-    g<-g+geom_line() + 
-      geom_point() +
-      ggtitle(paste("Armed Conflicts")) +
-      xlab("Year") + ylab("The number of reported cases")
-    g
-    
-    max(ACLED$count, na.rm = TRUE)
 ```
 
