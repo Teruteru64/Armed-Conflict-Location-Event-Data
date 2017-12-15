@@ -307,4 +307,3 @@ stargazer(fe.lnmilitary, fe.lnsocial,
 )
 ```
 
-
