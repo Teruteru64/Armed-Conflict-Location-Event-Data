@@ -307,45 +307,45 @@ DATA$GDP <- as.numeric(as.character(DATA$GDP))
 DATA$lnGDP <- log1p(DATA$GDP)
 ```
 
-```{r 2010 civconflict, include=FALSE, echo=FALSE}
-
-DATA2010 <-DATA
-DATA2010 <- DATA2010[ which(DATA2010$year==2010), ]
-DATA2010$GDP<-as.numeric(DATA2010$GDP) 
-DATA2010$subscription<-as.numeric(DATA2010$subscription) 
-DATA2010$penetration<-as.numeric(DATA2010$penetration) 
-names(DATA2010)[names(DATA2010) == "CIVILIAN INVOLVED CONFLICT"] <- "CIVILIANINVOLVEDCONFLICT"
-names(DATA2010)[names(DATA2010) == "ARMED GROUP CONFLICT"] <- "ARMEDGROUPCONFLICT"
-
-DATA2015 <-DATA
-DATA2015 <- DATA2015[ which(DATA2015$year==2015), ]
-DATA2015$GDP<-as.numeric(DATA2015$GDP) 
-DATA2015$subscription<-as.numeric(DATA2015$subscription) 
-DATA2015$penetration<-as.numeric(DATA2015$penetration) 
-names(DATA2015)[names(DATA2015) == "CIVILIAN INVOLVED CONFLICT"] <- "CIVILIANINVOLVEDCONFLICT"
-names(DATA2015)[names(DATA2015) == "ARMED GROUP CONFLICT"] <- "ARMEDGROUPCONFLICT"
-
-```
-
-## Explanatory Statitical Analysis
-
-In the next section, we explore the relationship between social media and reporting of conflict events in two levels of analysis. The first level is a time comparison between 2010 and 2015. This contrast considers that the number of facebook users increased almost 192 percent in this short time. The second level is the type of conflict divided whether the conflict was civil society related or armed actor related. Between 2010 and 2015, civil associated conflicts increased 225 percent and armed actors 291 percent. 
-
-Although the reporting of both types of conflict increased in similar ways, as it will be shown, it seems that in contrast to armed actors conflict events, civil society events are more associated to the increase of Facebook users.
-
-The 2015 civil society conflict events graph has an steeper slope than the 2010 plot, indicating that there is more association between facebook users and reports.
-
-Turning to the armed actors conflicts, the 2010 and 2015 graph, the steepness of the line is almost the same, it seems that there was no significant association between facebook users and resporting of armed actors events.
-
-```{r summary statistics 2010, echo=FALSE, results='asis'}
-
-mydata <- DATA2010
-stargazer(mydata [c("ARMEDGROUPCONFLICT","CIVILIANINVOLVEDCONFLICT","GDP","subscription")],header = FALSE, float = TRUE, title="Descriptive statistics 2010", digits=1, out="html",covariate.labels = c("Armed actors events","Civilian events","GDP per cap.","% of Facebook users"))
-
-mydata2 <- DATA2015
-stargazer(mydata2 [c("ARMEDGROUPCONFLICT","CIVILIANINVOLVEDCONFLICT","GDP","subscription")], header = FALSE, float = TRUE, title="Descriptive statistics 2015", digits=1, out="html",covariate.labels = c("Armed actors events","Civilian events","GDP per cap.","% of Facebook users"))
-
-```
+  ```{r 2010 civconflict, include=FALSE, echo=FALSE}
+  
+  DATA2010 <-DATA
+  DATA2010 <- DATA2010[ which(DATA2010$year==2010), ]
+  DATA2010$GDP<-as.numeric(DATA2010$GDP) 
+  DATA2010$subscription<-as.numeric(DATA2010$subscription) 
+  DATA2010$penetration<-as.numeric(DATA2010$penetration) 
+  names(DATA2010)[names(DATA2010) == "CIVILIAN INVOLVED CONFLICT"] <- "CIVILIANINVOLVEDCONFLICT"
+  names(DATA2010)[names(DATA2010) == "ARMED GROUP CONFLICT"] <- "ARMEDGROUPCONFLICT"
+  
+  DATA2015 <-DATA
+  DATA2015 <- DATA2015[ which(DATA2015$year==2015), ]
+  DATA2015$GDP<-as.numeric(DATA2015$GDP) 
+  DATA2015$subscription<-as.numeric(DATA2015$subscription) 
+  DATA2015$penetration<-as.numeric(DATA2015$penetration) 
+  names(DATA2015)[names(DATA2015) == "CIVILIAN INVOLVED CONFLICT"] <- "CIVILIANINVOLVEDCONFLICT"
+  names(DATA2015)[names(DATA2015) == "ARMED GROUP CONFLICT"] <- "ARMEDGROUPCONFLICT"
+  
+  ```
+  
+  ## Explanatory Statitical Analysis
+  
+  In the next section, we explore the relationship between social media and reporting of conflict events in two levels of analysis. The first level is a time comparison between 2010 and 2015. This contrast considers that the number of facebook users increased almost 192 percent in this short time. The second level is the type of conflict divided whether the conflict was civil society related or armed actor related. Between 2010 and 2015, civil associated conflicts increased 225 percent and armed actors 291 percent. 
+  
+  Although the reporting of both types of conflict increased in similar ways, as it will be shown, it seems that in contrast to armed actors conflict events, civil society events are more associated to the increase of Facebook users.
+  
+  The 2015 civil society conflict events graph has an steeper slope than the 2010 plot, indicating that there is more association between facebook users and reports.
+  
+  Turning to the armed actors conflicts, the 2010 and 2015 graph, the steepness of the line is almost the same, it seems that there was no significant association between facebook users and resporting of armed actors events.
+  
+  ```{r summary statistics 2010, echo=FALSE, results='asis'}
+  
+  mydata <- DATA2010
+  stargazer(mydata [c("ARMEDGROUPCONFLICT","CIVILIANINVOLVEDCONFLICT","GDP","subscription")],header = FALSE, float = TRUE, title="Descriptive statistics 2010", digits=1, out="html",covariate.labels = c("Armed actors events","Civilian events","GDP per cap.","% of Facebook users"))
+  
+  mydata2 <- DATA2015
+  stargazer(mydata2 [c("ARMEDGROUPCONFLICT","CIVILIANINVOLVEDCONFLICT","GDP","subscription")], header = FALSE, float = TRUE, title="Descriptive statistics 2015", digits=1, out="html",covariate.labels = c("Armed actors events","Civilian events","GDP per cap.","% of Facebook users"))
+  
+  ```
 
 
 ```{r civil conflict plot 2010, echo=FALSE, results='asis', warning = FALSE}
