@@ -63,6 +63,15 @@ install.packages("countrycode", repos = "https://cran.rstudio.com/")
 library(countrycode)
 install.packages("plm", repos = "https://cran.rstudio.com/")
 library(plm)
+install.packages("foreign", repos = "https://cran.rstudio.com/")
+library(foreign)
+install.packages("sandwich", repos = "https://cran.rstudio.com/")
+library(sandwich)
+install.packages("lmtest", repos = "https://cran.rstudio.com/")
+library(lmtest)
+install.packages("ggExtra", repos = "https://cran.rstudio.com/")
+library(ggExtra)
+
 ```
 
 ```{r DATA, include=FALSE, echo=FALSE}
@@ -281,17 +290,148 @@ names(DATA)[names(DATA)== "country.x"] <- "country"
 #log GDP
 DATA$GDP <- as.numeric(as.character(DATA$GDP))
 DATA$lnGDP <- log1p(DATA$GDP)
+```
 
+```{r 2010 civconflict, include=FALSE, echo=FALSE}
+
+DATA[is.na(DATA)] <- 0
+DATA2010 <-DATA
+DATA2010 <- DATA2010[ which(DATA2010$year==2010), ]
+DATA2010$GDP<-as.numeric(DATA2010$GDP) 
+DATA2010$subscription<-as.numeric(DATA2010$subscription) 
+DATA2010$penetration<-as.numeric(DATA2010$penetration) 
+DATA2010[is.na(DATA2010)] <- 0
+names(DATA2010)[names(DATA2010) == "CIVILIAN INVOLVED CONFLICT"] <- "CIVILIANINVOLVEDCONFLICT"
+names(DATA2010)[names(DATA2010) == "ARMED GROUP CONFLICT"] <- "ARMEDGROUPCONFLICT"
+
+DATA2015 <-DATA
+DATA2015 <- DATA2015[ which(DATA2015$year==2015), ]
+DATA2015$GDP<-as.numeric(DATA2015$GDP) 
+DATA2015$subscription<-as.numeric(DATA2015$subscription) 
+DATA2015$penetration<-as.numeric(DATA2015$penetration) 
+DATA2015[is.na(DATA2015)] <- 0
+names(DATA2015)[names(DATA2015) == "CIVILIAN INVOLVED CONFLICT"] <- "CIVILIANINVOLVEDCONFLICT"
+names(DATA2015)[names(DATA2015) == "ARMED GROUP CONFLICT"] <- "ARMEDGROUPCONFLICT"
 
 ```
 
+
+```{r summary statistics 2010, echo=FALSE, results='asis'}
+
+mydata <- DATA2010
+stargazer(mydata [c("ARMEDGROUPCONFLICT","CIVILIANINVOLVEDCONFLICT","GDP","subscription")],header = FALSE, float = TRUE, title="Descriptive statistics 2010", digits=1, out="html",covariate.labels = c("Armed actors events","Civilian events","GDP per cap.","% of Facebook users"))
+
+mydata2 <- DATA2015
+stargazer(mydata2 [c("ARMEDGROUPCONFLICT","CIVILIANINVOLVEDCONFLICT","GDP","subscription")], header = FALSE, float = TRUE, title="Descriptive statistics 2015", digits=1, out="html",covariate.labels = c("Armed actors events","Civilian events","GDP per cap.","% of Facebook users"))
+
+```
+
+```{r civil conflict plot 2010, echo=FALSE, results='asis', warning = FALSE}
+options(scipen=999) 
+theme_set(theme_bw())
+civsoc10 <- DATA2010[DATA2010$CIVILIANINVOLVEDCONFLICT & DATA2010$subscription , ]
+g <- ggplot(DATA2010, aes(subscription, CIVILIANINVOLVEDCONFLICT)) + 
+  geom_count() + 
+  geom_smooth(method="lm", se=F)+ 
+  labs(subtitle="Facebook users vs. Civil society conflict events", 
+       y="Civil soc conflict", 
+       x="Facebook", 
+       title="Civil Conflicts by facebook users 2010", 
+       caption = "Source: ACLED, Internet Stats")+
+  scale_x_log10()
+plot(g)
+```
+
+
+```{r 2015 civilian conflict, echo=FALSE, results='asis', warning = FALSE}
+options(scipen=999) 
+theme_set(theme_bw())
+civsoc15 <- DATA2015[DATA2015$CIVILIANINVOLVEDCONFLICT & DATA2015$subscription , ]
+a <- ggplot(DATA2015, aes(subscription, CIVILIANINVOLVEDCONFLICT)) + 
+  geom_count() + 
+  geom_smooth(method="lm", se=F)+ 
+  labs(subtitle="Facebook users vs. Civil society conflict events", 
+       y="Civil soc conflict", 
+       x="Facebook", 
+       title="Civil Conflicts by facebook users 2015", 
+       caption = "Source: ACLED, Internet Stats")+
+  scale_x_log10()
+plot(a)
+```
+
+```{r armed group conflict plot 2010, echo=FALSE, results='asis', warning = FALSE}
+options(scipen=999) 
+theme_set(theme_bw())
+civsoc10 <- DATA2010[DATA2010$ARMEDGROUPCONFLICT & DATA2010$subscription , ]
+b <- ggplot(DATA2010, aes(subscription, ARMEDGROUPCONFLICT)) + 
+  geom_count() + 
+  geom_smooth(method="lm", se=F)+ 
+  labs(subtitle="Facebook users vs. Civil society conflict events", 
+       y="Armed group conflict", 
+       x="Facebook", 
+       title="Armed Group Conflict by facebook users 2010", 
+       caption = "Source: ACLED, Internet Stats")+
+  scale_x_log10()
+plot(b)
+```
+
+```{r armed group conflict plot 2015, echo=FALSE, results='asis', warning = FALSE}
+options(scipen=999) 
+theme_set(theme_bw())
+civsoc10 <- DATA2015[DATA2010$ARMEDGROUPCONFLICT & DATA2015$subscription , ]
+c <- ggplot(DATA2015, aes(subscription, ARMEDGROUPCONFLICT)) + 
+  geom_count() + 
+  geom_smooth(method="lm", se=F)+ 
+  labs(subtitle="Facebook users vs. Civil society conflict events", 
+       y="Armed group conflict", 
+       x="Facebook", 
+       title="Armed Group Conflict by facebook users 2015",
+       caption = "Source: ACLED, Internet Stats")+
+  scale_x_log10()
+plot(c)
+```
+
+```{r regressions output, include=FALSE, echo=FALSE}
+#Civilian regressions
+#2010
+reg10soc = lm(CIVILIANINVOLVEDCONFLICT ~ penetration + lnGDP, data= DATA2010)
+m1<-coeftest(reg10soc, vcov = vcovHC(reg10soc, "HC1"))
+#2015
+reg15soc = lm(CIVILIANINVOLVEDCONFLICT ~ penetration + lnGDP, data= DATA2015)
+m2<-coeftest(reg15soc, vcov = vcovHC(reg15soc, "HC1"))
+
+#Armed group regressions
+#2010
+reg10armed = lm(ARMEDGROUPCONFLICT ~ penetration + lnGDP, data= DATA2010)
+m3<-coeftest(reg10armed, vcov = vcovHC(reg10armed, "HC1"))
+#2015
+reg15armed = lm(ARMEDGROUPCONFLICT ~ penetration + lnGDP, data= DATA2015)
+m4<-coeftest(reg15armed, vcov = vcovHC(reg15armed, "HC1"))
+
+```
+
+```{r actual reg output, echo=FALSE, results='asis'}
+stargazer(m1, m2, 
+          header = FALSE, float = TRUE,
+          report = ('vc*p'),
+          title            = "Civilan Conflicts",
+          dep.var.labels=c("Civilian events 2010 and 2015"),
+          covariate.labels=c("Facebook penetration","GDP per cap. (log)"),
+          out="html")
+
+stargazer(m3, m4, 
+          header = FALSE, float = TRUE,
+          report = ('vc*p'),
+          title            = "Armed Group Conflicts",
+          dep.var.labels=c("Armed actors events 2010 and 2015"),
+          covariate.labels=c("Facebook penetration","GDP per cap. (log)"),
+          out = "html")
+```
 
 ```{r fixed effect regression, include=FALSE, echo=FALSE}
 #see https://cran.r-project.org/web/packages/plm/vignettes/plm.pdf
 fe.lnmilitary <- plm(lnmilitary ~ penetration + lnGDP, index=c("country", "year"), data=DATA, effect="twoways")
 fe.lnsocial <- plm(lnsocial ~ penetration + lnGDP, index=c("country", "year"), data=DATA, effect="twoways")
-summary(fe.lnmilitary)
-summary(fe.lnsocial)
 ``` 
 
 ```{r regression table, echo=FALSE, results='asis'}
@@ -299,12 +439,13 @@ stargazer(fe.lnmilitary, fe.lnsocial,
           header = FALSE, float = TRUE,
           report = ('vc*p'),
           title            = "Two-way Fixed Effect Regression",
-          covariate.labels = c("Facebook penetration", "GDP per capita (log)"),
+          covariate.labels = c("Facebook penetration", "GDP per cap. (log)"),
           dep.var.caption = "Conflict type",
           dep.var.labels.include = FALSE,
           column.labels = c("Armed Group Conflict", "Civilian Conflict"),
           out = "html"
 )
-```
+``` 
+
 
 
